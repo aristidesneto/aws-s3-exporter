@@ -1,0 +1,8 @@
+# Profile utilizado para acessar a AWS
+aws_profile: default
+aws_region: us-east-1
+# Lista de buckets que serão monitorados
+buckets:
+  - my-bucket
+# Intervalo em minutos para verificar os buckets
+interval: 5
