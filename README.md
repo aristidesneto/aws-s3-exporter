@@ -122,3 +122,52 @@ aws-s3-exporter/
 ├── main.go          # Ponto de entrada
 └── Makefile         # Comandos úteis
 ```
+
+## Permissões AWS IAM Necessárias
+
+O exporter precisa das seguintes permissões IAM mínimas para funcionar:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+         "s3:PutObject",              # Para salvar objetos no bucket
+         "s3:ListBucket",             # Para listar objetos dentro do bucket
+         "s3:GetBucketLocation",      # Para verificar a região do bucket
+         "s3:GetObject"               # Para obter informações sobre os objetos
+      ],
+      "Resource": [
+        "arn:aws:s3:::nome-do-seu-bucket",
+        "arn:aws:s3:::nome-do-seu-bucket/*"
+      ]
+    }
+  ]
+}
+```
+
+Substitua `nome-do-seu-bucket` pelos nomes dos buckets que você deseja monitorar. Para múltiplos buckets, adicione suas ARNs na lista de `Resource`.
+
+Exemplo para múltiplos buckets:
+
+```json
+"Resource": [
+    "arn:aws:s3:::bucket1",
+    "arn:aws:s3:::bucket1/*",
+    "arn:aws:s3:::bucket2",
+    "arn:aws:s3:::bucket2/*"
+]
+```
+
+### Detalhamento das Permissões
+
+As permissões necessárias são:
+
+- `s3:PutObject`: Permite salvar os objetos no bucket
+- `s3:ListBucket`: Permite listar os objetos dentro do bucket, necessário para coletar informações sobre arquivos e diretórios
+- `s3:GetBucketLocation`: Permite verificar se temos acesso ao bucket e sua localização
+- `s3:GetObject`: Permite obter metadados dos objetos, como tamanho e última modificação
+
+Estas são as permissões mínimas necessárias para o funcionamento do exporter.

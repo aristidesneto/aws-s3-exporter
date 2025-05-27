@@ -36,15 +36,14 @@ func (c *S3Collector) Collect() error {
 
 	client := s3.NewFromConfig(awsCfg)
 
-	result, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
-	if err != nil {
-		return err
-	}
-
-	for _, bucket := range result.Buckets {
-		bucketName := aws.ToString(bucket.Name)
-
-		if !helper.Contains(c.cfg.Buckets, bucketName) {
+	// Em vez de listar todos os buckets, processa apenas os buckets configurados
+	for _, bucketName := range c.cfg.Buckets {
+		// Verifica se temos acesso ao bucket
+		_, err := client.HeadBucket(ctx, &s3.HeadBucketInput{
+			Bucket: aws.String(bucketName),
+		})
+		if err != nil {
+			log.Printf("Erro ao verificar acesso ao bucket %s: %v", bucketName, err)
 			continue
 		}
 
