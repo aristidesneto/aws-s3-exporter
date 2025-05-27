@@ -10,7 +10,6 @@ import (
 	"aws-s3-exporter/internal/metrics"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -30,15 +29,12 @@ func NewS3Collector(cfg config.Config) *S3Collector {
 func (c *S3Collector) Collect() error {
 	ctx := context.TODO()
 
-	cfg, err := awsconfig.LoadDefaultConfig(ctx,
-		awsconfig.WithSharedConfigProfile(c.cfg.AwsProfile),
-		awsconfig.WithRegion(c.cfg.AwsRegion),
-	)
+	awsCfg, err := config.LoadAWSConfig(ctx, c.cfg.AwsProfile, c.cfg.AwsRegion)
 	if err != nil {
 		return fmt.Errorf("erro ao carregar configuração AWS: %v", err)
 	}
 
-	client := s3.NewFromConfig(cfg)
+	client := s3.NewFromConfig(awsCfg)
 
 	result, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
