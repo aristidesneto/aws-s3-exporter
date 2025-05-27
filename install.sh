@@ -33,7 +33,7 @@ sudo mkdir -p ${CONFIG_DIR}
 
 # Clona o repositório
 echo -e "${GREEN}Clonando repositório...${NC}"
-git clone https://github.com/seu-usuario/aws-s3-exporter.git /tmp/aws-s3-exporter
+git clone https://github.com/aristidesneto/aws-s3-exporter.git /tmp/aws-s3-exporter
 
 # Entra no diretório
 cd /tmp/aws-s3-exporter
@@ -75,3 +75,4 @@ echo -e "2. Inicie o serviço: ${YELLOW}sudo systemctl start aws-s3-exporter${NC
 echo -e "3. Habilite o serviço para iniciar com o sistema: ${YELLOW}sudo systemctl enable aws-s3-exporter${NC}"
 echo -e "\nPara verificar o status: ${YELLOW}sudo systemctl status aws-s3-exporter${NC}"
 echo -e "Para ver os logs: ${YELLOW}sudo journalctl -u aws-s3-exporter -f${NC}"
+echo -e "Para ver as métricas exportadas: ${YELLOW}curl -i http://localhost:2112/metrics${NC}"
