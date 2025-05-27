@@ -2,7 +2,7 @@
 
 Este é um exportador Prometheus que coleta métricas de buckets S3 da AWS, fornecendo informações sobre contagem de arquivos e tamanho total por prefixo de data.
 
-> **Nota sobre o Caso de Uso**: Este exporter foi desenvolvido para atender uma necessidade específica de monitoramento de buckets S3 onde os arquivos são organizados por data (exemplo: 2025/05/26). A lógica de agrupamento por prefixo de data é um requisito específico da empresa onde foi originalmente desenvolvido, portanto, pode necessitar adaptações para outros casos de uso.
+> **Nota sobre o Caso de Uso**: Este exporter foi desenvolvido para atender uma necessidade específica de monitoramento de buckets S3 onde os arquivos são organizados por data (exemplo: 2025/05/26). A lógica de agrupamento por prefixo de data é um requisito específico, portanto, pode necessitar adaptações para outros casos de uso.
 
 ## Funcionalidades
 
@@ -29,9 +29,9 @@ Este é um exportador Prometheus que coleta métricas de buckets S3 da AWS, forn
 1. Clone o repositório
 2. Copie o arquivo de exemplo de configuração:
    ```bash
-   cp config.yaml.example.yaml config.yaml
+   cp configs/config.example.yaml configs/config.yaml
    ```
-3. Configure o arquivo `config.yaml` com suas configurações:
+3. Configure o arquivo `configs/config.yaml` com suas configurações:
    ```yaml
    aws_profile: "seu-profile" # Profile AWS a ser usado
    aws_region: "us-east-1" # Região AWS
@@ -48,7 +48,6 @@ O projeto utiliza um Makefile para facilitar as operações comuns:
 - `make help`: Exibe a lista de comandos disponíveis
 - `make build`: Compila o projeto
 - `make run`: Executa a aplicação
-- `make test`: Executa os testes
 - `make clean`: Remove os binários gerados
 - `make lint`: Executa o linter (golangci-lint)
 - `make fmt`: Formata o código fonte
@@ -79,7 +78,7 @@ O exportador estará disponível em `http://localhost:2112/metrics`
 Para instalar o exporter em um novo servidor, você pode usar o script de instalação:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/seu-usuario/aws-s3-exporter/main/install.sh | sudo zsh
+curl -sSL https://raw.githubusercontent.com/aristidesneto/aws-s3-exporter/main/install.sh | sudo bash
 ```
 
 O script irá:
@@ -120,18 +119,6 @@ aws-s3-exporter/
 ├── internal/        # Funções internas
 ├── prometheus/      # Definições das métricas
 ├── config.yaml      # Arquivo de configuração
-├── main.go         # Ponto de entrada
-└── Makefile        # Comandos úteis
+├── main.go          # Ponto de entrada
+└── Makefile         # Comandos úteis
 ```
-
-## Contribuindo
-
-1. Faça o fork do projeto
-2. Crie sua feature branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -am 'Adicionando nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Crie um Pull Request
-
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
