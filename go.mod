@@ -1,4 +1,4 @@
-module aws-exporter
+module aws-s3-exporter
 
 go 1.24.1
 

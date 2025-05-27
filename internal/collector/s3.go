@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"aws-exporter/internal/config"
-	"aws-exporter/internal/helper"
-	"aws-exporter/internal/metrics"
+	"aws-s3-exporter/internal/config"
+	"aws-s3-exporter/internal/helper"
+	"aws-s3-exporter/internal/metrics"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"

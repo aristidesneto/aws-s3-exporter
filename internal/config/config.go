@@ -13,13 +13,11 @@ type Config struct {
 	AwsRegion  string `mapstructure:"aws_region"`
 }
 
-func LoadConfigFile() Config {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./configs")
+func LoadConfigFile(configPath string) Config {
+	viper.SetConfigFile(configPath)
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("error reading config file: %v", err)
+		log.Fatalf("erro ao ler arquivo de configuração: %v", err)
 	}
 
 	var cfg Config

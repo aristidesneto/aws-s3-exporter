@@ -63,11 +63,39 @@ O projeto utiliza um Makefile para facilitar as operações comuns:
    ```
 
 2. Executar o exportador:
+
    ```bash
+   # Usando o arquivo de configuração padrão em ./configs/config.yaml
    make run
+
+   # Ou especificando um arquivo de configuração diferente
+   ./bin/aws-s3-exporter --config /caminho/para/config.yaml
    ```
 
 O exportador estará disponível em `http://localhost:2112/metrics`
+
+## Instalação Rápida
+
+Para instalar o exporter em um novo servidor, você pode usar o script de instalação:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/seu-usuario/aws-s3-exporter/main/install.sh | sudo zsh
+```
+
+O script irá:
+
+1. Verificar os pré-requisitos (Go e Git)
+2. Criar os diretórios necessários
+3. Clonar o repositório
+4. Buildar o projeto
+5. Instalar o binário e arquivos de configuração
+6. Configurar o serviço systemd
+
+Após a instalação:
+
+1. Configure o arquivo em `/etc/aws-s3-exporter/config.yaml`
+2. Inicie o serviço: `sudo systemctl start aws-s3-exporter`
+3. Habilite o início automático: `sudo systemctl enable aws-s3-exporter`
 
 ## Desenvolvimento
 
@@ -87,7 +115,7 @@ Este comando irá:
 ## Estrutura do Projeto
 
 ```
-aws-exporter/
+aws-s3-exporter/
 ├── config/          # Configurações
 ├── internal/        # Funções internas
 ├── prometheus/      # Definições das métricas

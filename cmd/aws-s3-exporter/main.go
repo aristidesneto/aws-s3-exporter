@@ -1,9 +1,10 @@
 package main
 
 import (
-	"aws-exporter/internal/collector"
-	"aws-exporter/internal/config"
-	"aws-exporter/internal/metrics"
+	"aws-s3-exporter/internal/collector"
+	"aws-s3-exporter/internal/config"
+	"aws-s3-exporter/internal/metrics"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,8 +14,15 @@ import (
 )
 
 func main() {
+	configPath := flag.String("config", "", "Caminho para o arquivo de configuração")
+	flag.Parse()
+
+	if configPath == nil || *configPath == "" {
+		log.Fatal("O caminho do arquivo de configuração é obrigatório. Use a flag -config para especificar o caminho.")
+	}
+
 	metrics.InitMetrics()
-	cfg := config.LoadConfigFile()
+	cfg := config.LoadConfigFile(*configPath)
 
 	s3Collector := collector.NewS3Collector(cfg)
 

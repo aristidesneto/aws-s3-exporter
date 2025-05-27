@@ -1,7 +1,7 @@
 .PHONY: build run test clean lint help
 
 # Variáveis
-APP_NAME = aws-exporter
+APP_NAME = aws-s3-exporter
 GO = go
 BIN_DIR = bin
 
@@ -16,10 +16,10 @@ help:
 
 build:
 	mkdir -p $(BIN_DIR)
-	$(GO) build -o $(BIN_DIR)/$(APP_NAME) ./cmd/aws-exporter
+	$(GO) build -o $(BIN_DIR)/$(APP_NAME) ./cmd/aws-s3-exporter
 
 run: build
-	./$(BIN_DIR)/$(APP_NAME)
+	./$(BIN_DIR)/$(APP_NAME) --config ./configs/config.yaml
 
 test:
 	$(GO) test -v ./...
