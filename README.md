@@ -134,10 +134,10 @@ O exporter precisa das seguintes permissões IAM mínimas para funcionar:
     {
       "Effect": "Allow",
       "Action": [
-         "s3:PutObject",              # Para salvar objetos no bucket
-         "s3:ListBucket",             # Para listar objetos dentro do bucket
-         "s3:GetBucketLocation",      # Para verificar a região do bucket
-         "s3:GetObject"               # Para obter informações sobre os objetos
+         "s3:PutObject",
+         "s3:ListBucket",
+         "s3:GetBucketLocation",
+         "s3:GetObject"
       ],
       "Resource": [
         "arn:aws:s3:::nome-do-seu-bucket",
