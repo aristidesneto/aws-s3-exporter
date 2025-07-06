@@ -18,9 +18,18 @@ var (
 		},
 		[]string{"bucket", "prefix"},
 	)
+
+	LastUpload = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "s3_backup_last_upload_timestamp",
+			Help: "Timestamp do último upload por prefixo (ano/mês/dia)",
+		},
+		[]string{"bucket", "prefix"},
+	)
 )
 
 func InitMetrics() {
 	prometheus.MustRegister(FileCount)
 	prometheus.MustRegister(TotalSize)
+	prometheus.MustRegister(LastUpload)
 }

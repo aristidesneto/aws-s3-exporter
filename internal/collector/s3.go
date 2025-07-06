@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"aws-s3-exporter/internal/config"
 	"aws-s3-exporter/internal/helper"
@@ -13,19 +14,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// Collector handles S3 metrics collection
 type S3Collector struct {
 	cfg config.Config
 }
 
-// NewS3Collector creates a new S3 collector instance
 func NewS3Collector(cfg config.Config) *S3Collector {
 	return &S3Collector{
 		cfg: cfg,
 	}
 }
 
-// Collect gathers metrics from S3 buckets
 func (c *S3Collector) Collect() error {
 	ctx := context.TODO()
 
@@ -49,9 +47,15 @@ func (c *S3Collector) Collect() error {
 
 		log.Printf("Processando bucket: %s", bucketName)
 
+		metrics.FileCount.Reset()
+		metrics.TotalSize.Reset()
+		metrics.LastUpload.Reset()
+
 		if err := c.collectBucketMetrics(ctx, client, bucketName); err != nil {
 			log.Printf("Erro ao coletar métricas do bucket %s: %v", bucketName, err)
 		}
+
+		log.Printf("Métricas do bucket %s coletadas com sucesso", bucketName)
 	}
 
 	return nil
@@ -62,8 +66,11 @@ func (c *S3Collector) collectBucketMetrics(ctx context.Context, client *s3.Clien
 		Bucket: &bucketName,
 	})
 
+	const retentionDays = 60
+
 	countMap := make(map[string]int)
 	sizeMap := make(map[string]int64)
+	lastUploadMap := make(map[string]time.Time)
 
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
@@ -74,16 +81,27 @@ func (c *S3Collector) collectBucketMetrics(ctx context.Context, client *s3.Clien
 		for _, obj := range page.Contents {
 			key := aws.ToString(obj.Key)
 			size := aws.ToInt64(obj.Size)
-			prefix := helper.ExtractDatePrefix(key)
+			lastMod := aws.ToTime(obj.LastModified)
+
+			// prefix := helper.ExtractDatePrefix(key)
+			prefix, valid := helper.ExtractDatePrefixAndCheck(key, lastMod, retentionDays)
+			if !valid {
+				continue
+			}
 
 			countMap[prefix]++
 			sizeMap[prefix] += size
+			// Salvar maior timestamp por prefixo
+			if current, ok := lastUploadMap[prefix]; !ok || lastMod.After(current) {
+				lastUploadMap[prefix] = lastMod
+			}
 		}
 	}
 
 	for prefix, count := range countMap {
 		metrics.FileCount.WithLabelValues(bucketName, prefix).Set(float64(count))
 		metrics.TotalSize.WithLabelValues(bucketName, prefix).Set(float64(sizeMap[prefix]))
+		metrics.LastUpload.WithLabelValues(bucketName, prefix).Set(float64(lastUploadMap[prefix].Unix()))
 	}
 
 	return nil
