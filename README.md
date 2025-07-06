@@ -27,11 +27,40 @@ Este é um exportador Prometheus que coleta métricas de buckets S3 da AWS, forn
 
 ## Instalação
 
-### Docker
+Crie um arquivo de configuração chamado `config.yaml` com as seguintes configurações.
+
+> Atualize conforme necessidade
+
+```yaml
+# AWS S3 Exporter Configuration
+# =============================
+# Este arquivo define as configurações do exporter de métricas S3.
+# Siga o padrão YAML e consulte a documentação para detalhes de cada campo.
+
+aws:
+  # Profile utilizado para acessar a AWS (opcional, pode ser sobrescrito por variáveis de ambiente ou flags)
+  # Em ambientes Docker ou cloud, recomenda-se utilizar as variáveis de ambiente padrão da AWS
+  # (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION), pois elas têm prioridade sobre o profile configurado aqui.
+  # Deixe em branco para ser usado a default
+  profile: ""
+  # Região AWS (opcional, pode ser sobrescrito por variáveis de ambiente ou flags)
+  region: ""
+
+s3:
+  # Lista de buckets que serão monitorados
+  buckets: []
+
+# Intervalo em minutos para verificar os buckets
+interval: 10
+```
+
+Escolha como deseja rodar sua aplicação:
+
+1. **Docker**
 
 ```bash
-docker run -d --name aws-s3-exporter -p 2112:2112 \
-  -v config.yaml:/etc/aws-s3-exporter/config.yaml \
+docker run -p 2112:2112 \
+  -v ./config.yaml:/etc/aws-s3-exporter/config.yaml \
   -e AWS_DEFAULT_REGION=us-east-1 \
   -e AWS_ACCESS_KEY_ID=<access-key> \
   -e AWS_SECRET_ACCESS_KEY=<secret-key> \
@@ -39,7 +68,7 @@ docker run -d --name aws-s3-exporter -p 2112:2112 \
     --config /etc/aws-s3-exporter/config.yaml
 ```
 
-### Docker compose
+2. **Docker Compose**
 
 ```yaml
 services:
@@ -56,7 +85,7 @@ services:
       - "2112:2112"
 ```
 
-### Linux
+3. **Linux**
 
 Para instalar o exporter em um servidor Linux com systemd, você pode usar o script de instalação:
 
