@@ -64,7 +64,7 @@ docker run -p 2112:2112 \
   -e AWS_DEFAULT_REGION=us-east-1 \
   -e AWS_ACCESS_KEY_ID=<access-key> \
   -e AWS_SECRET_ACCESS_KEY=<secret-key> \
-  aristidesbneto/aws-s3-exporter:v1 \
+  aristidesbneto/aws-s3-exporter:latest \
     --config /etc/aws-s3-exporter/config.yaml
 ```
 
@@ -73,7 +73,7 @@ docker run -p 2112:2112 \
 ```yaml
 services:
   aws-s3-exporter:
-    image: aristidesbneto/aws-s3-exporter:v1
+    image: aristidesbneto/aws-s3-exporter:latest
     environment:
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
