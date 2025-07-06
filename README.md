@@ -17,6 +17,7 @@ Este é um exportador Prometheus que coleta métricas de buckets S3 da AWS, forn
 
 - `s3_file_count`: Número de arquivos por bucket e prefixo de data
 - `s3_total_size`: Tamanho total dos arquivos por bucket e prefixo de data
+- `s3_backup_last_upload_timestamp`: Timestamp do último upload por prefixo (ano/mês/dia)
 
 ## Pré-requisitos
 
@@ -24,58 +25,40 @@ Este é um exportador Prometheus que coleta métricas de buckets S3 da AWS, forn
 - Credenciais AWS configuradas
 - make (opcional, para usar os comandos do Makefile)
 
-## Configuração
+## Instalação
 
-1. Clone o repositório
-2. Copie o arquivo de exemplo de configuração:
-   ```bash
-   cp configs/config.example.yaml configs/config.yaml
-   ```
-3. Configure o arquivo `configs/config.yaml` com suas configurações:
-   ```yaml
-   aws_profile: "seu-profile" # Profile AWS a ser usado
-   aws_region: "us-east-1" # Região AWS
-   interval: 5 # Intervalo de coleta em minutos
-   buckets: # Lista de buckets para monitorar
-     - "bucket-1"
-     - "bucket-2"
-   ```
+### Docker
 
-## Comandos Disponíveis
+```bash
+docker run -d --name aws-s3-exporter -p 2112:2112 \
+  -v config.yaml:/etc/aws-s3-exporter/config.yaml \
+  -e AWS_DEFAULT_REGION=us-east-1 \
+  -e AWS_ACCESS_KEY_ID=<access-key> \
+  -e AWS_SECRET_ACCESS_KEY=<secret-key> \
+  aristidesbneto/aws-s3-exporter:v1 \
+    --config /etc/aws-s3-exporter/config.yaml
+```
 
-O projeto utiliza um Makefile para facilitar as operações comuns:
+### Docker compose
 
-- `make help`: Exibe a lista de comandos disponíveis
-- `make build`: Compila o projeto
-- `make run`: Executa a aplicação
-- `make clean`: Remove os binários gerados
-- `make lint`: Executa o linter (golangci-lint)
-- `make fmt`: Formata o código fonte
-- `make dev`: Executa formatação, lint, build e roda a aplicação
+```yaml
+services:
+  aws-s3-exporter:
+    image: aristidesbneto/aws-s3-exporter:v1
+    environment:
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    # command: "--config /etc/aws-s3-exporter/config.yaml"
+    volumes:
+      - ./configs/config.yaml:/etc/aws-s3-exporter/config.yaml:ro
+    ports:
+      - "2112:2112"
+```
 
-## Como Executar
+### Linux
 
-1. Build do projeto:
-
-   ```bash
-   make build
-   ```
-
-2. Executar o exportador:
-
-   ```bash
-   # Usando o arquivo de configuração padrão em ./configs/config.yaml
-   make run
-
-   # Ou especificando um arquivo de configuração diferente
-   ./bin/aws-s3-exporter --config /caminho/para/config.yaml
-   ```
-
-O exportador estará disponível em `http://localhost:2112/metrics`
-
-## Instalação Rápida
-
-Para instalar o exporter em um novo servidor, você pode usar o script de instalação:
+Para instalar o exporter em um servidor Linux com systemd, você pode usar o script de instalação:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/aristidesneto/aws-s3-exporter/main/install.sh | sudo bash
@@ -98,18 +81,60 @@ Após a instalação:
 
 ## Desenvolvimento
 
-Para desenvolvimento, você pode usar o comando:
+Se deseja contribuir, você pode executar o projeto localmente:
+
+1. Clone o repositório
+
+2. Copie o arquivo de exemplo de configuração:
+
+   ```bash
+   cp configs/config.example.yaml configs/config.yaml
+   ```
+
+3. Atualize o arquivo `./configs/config.yaml` com as suas configurações.
+4. Ao executar, sua aplicação estará disponíveis em `http://localhost:2112/metrics`.
+
+### Usando Makefile
+
+Executar o exportador:
 
 ```bash
-make dev
+# O arquivo de configuração padrão será usado: ./configs/config.yaml
+make run
 ```
 
-Este comando irá:
+### Usando Go CLI
 
-1. Formatar o código
-2. Executar o linter
-3. Compilar o projeto
-4. Executar a aplicação
+Para executar via linha de comando
+
+```bash
+go run cmd/aws-s3-exporter/main.go --config=./configs/config.yaml
+```
+
+Você pode sobrescrever qualquer valor do arquivo de configuração usando variáveis de ambiente. Exemplo:
+
+```
+AWS_DEFAULT_REGION=us-east-1 \
+AWS_ACCESS_KEY_ID=<access-key> \
+AWS_SECRET_ACCESS_KEY=<secret-key> \
+S3_BUCKETS=bucket1,bucket2 \
+INTERVAL=10 \
+go run cmd/aws-s3-exporter/main.go
+```
+
+### Usando Docker Compose (recomendado)
+
+1. Crie o arquivo `.env` e adicione suas credenciais da AWS.
+
+```bash
+cp .env.example .env
+```
+
+2. Edite o arquivo `./configs/config.yaml` conforme necessário.
+
+3. O arquivo `compose.yaml` já está configurado para ler seu `.env` e substiuir as variáveis de ambiente corretamente.
+
+4. Execute `docker compose build && docker compose up -d` para buildar a aplicação e executar o container.
 
 ## Estrutura do Projeto
 
@@ -123,6 +148,18 @@ aws-s3-exporter/
 └── Makefile         # Comandos úteis
 ```
 
+## Comandos Disponíveis Makefile
+
+O projeto utiliza um Makefile para facilitar as operações comuns:
+
+- `make help`: Exibe a lista de comandos disponíveis
+- `make build`: Compila o projeto
+- `make run`: Executa a aplicação
+- `make clean`: Remove os binários gerados
+- `make lint`: Executa o linter (golangci-lint)
+- `make fmt`: Formata o código fonte
+- `make dev`: Executa formatação, lint, build e roda a aplicação
+
 ## Permissões AWS IAM Necessárias
 
 O exporter precisa das seguintes permissões IAM mínimas para funcionar:
@@ -134,10 +171,10 @@ O exporter precisa das seguintes permissões IAM mínimas para funcionar:
     {
       "Effect": "Allow",
       "Action": [
-         "s3:PutObject",
-         "s3:ListBucket",
-         "s3:GetBucketLocation",
-         "s3:GetObject"
+        "s3:PutObject",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetObject"
       ],
       "Resource": [
         "arn:aws:s3:::nome-do-seu-bucket",

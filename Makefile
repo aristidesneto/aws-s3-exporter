@@ -1,7 +1,9 @@
 .PHONY: build run test clean lint help
 
 # Variáveis
+GIT_HASH = $(shell git rev-parse --short HEAD)
 APP_NAME = aws-s3-exporter
+REGISTRY = aristidesbneto/$(APP_NAME)
 GO = go
 BIN_DIR = bin
 
@@ -17,6 +19,15 @@ help:
 build:
 	mkdir -p $(BIN_DIR)
 	$(GO) build -o $(BIN_DIR)/$(APP_NAME) ./cmd/aws-s3-exporter
+
+docker: docker-build docker-push
+
+docker-build:
+	docker build -t $(REGISTRY):$(GIT_HASH) .
+
+docker-push:
+	docker push $(REGISTRY):$(GIT_HASH)
+
 
 run: build
 	./$(BIN_DIR)/$(APP_NAME) --config ./configs/config.yaml

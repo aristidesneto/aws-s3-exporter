@@ -91,6 +91,17 @@ fi
 
 # Cria ou atualiza o service do systemd
 echo -e "${GREEN}Configurando serviço systemd...${NC}"
+
+# Cria um usuário de sistema dedicado para o exporter, se ele não existir
+if ! id "aws-s3-exporter" &>/dev/null; then
+    echo -e "${GREEN}Criando usuário de sistema 'aws-s3-exporter'...${NC}"
+    sudo useradd --system --no-create-home --shell /bin/false aws-s3-exporter
+fi
+
+# Define as permissões corretas
+sudo chown -R aws-s3-exporter:aws-s3-exporter ${INSTALL_DIR}
+sudo chown -R aws-s3-exporter:aws-s3-exporter ${CONFIG_DIR}
+
 # Backup do arquivo de serviço existente
 backup_config "${SYSTEMD_DIR}/aws-s3-exporter.service"
 cat << EOF | sudo tee ${SYSTEMD_DIR}/aws-s3-exporter.service
@@ -100,7 +111,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=aws-s3-exporter
+Group=aws-s3-exporter
 ExecStart=${INSTALL_DIR}/aws-s3-exporter --config ${CONFIG_DIR}/config.yaml
 Restart=always
 RestartSec=10

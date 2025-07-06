@@ -1,0 +1,18 @@
+services:
+  aws-exporter:
+    build: .
+    environment:
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    # command: "--config /etc/aws-s3-exporter/config.yaml"
+    volumes:
+      - ./configs/config.yaml:/etc/aws-s3-exporter/config.yaml:ro
+    ports:
+      - "2112:2112"
+    networks:
+      - exporter
+
+networks:
+  exporter:
+    driver: bridge

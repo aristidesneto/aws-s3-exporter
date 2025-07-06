@@ -15,29 +15,32 @@ import (
 )
 
 type S3Collector struct {
-	cfg config.Config
+	client *s3.Client
+	cfg    config.Config
 }
 
-func NewS3Collector(cfg config.Config) *S3Collector {
+func NewS3Collector(client *s3.Client, cfg config.Config) *S3Collector {
 	return &S3Collector{
-		cfg: cfg,
+		client: client,
+		cfg:    cfg,
 	}
 }
 
 func (c *S3Collector) Collect() error {
 	ctx := context.TODO()
 
-	awsCfg, err := config.LoadAWSConfig(ctx, c.cfg.AwsProfile, c.cfg.AwsRegion)
-	if err != nil {
-		return fmt.Errorf("erro ao carregar configuração AWS: %v", err)
+	metrics.FileCount.Reset()
+	metrics.TotalSize.Reset()
+	metrics.LastUpload.Reset()
+
+	if len(c.cfg.S3.Buckets) == 0 {
+		return fmt.Errorf("nenhum bucket foi especificado")
 	}
 
-	client := s3.NewFromConfig(awsCfg)
-
 	// Em vez de listar todos os buckets, processa apenas os buckets configurados
-	for _, bucketName := range c.cfg.Buckets {
+	for _, bucketName := range c.cfg.S3.Buckets {
 		// Verifica se temos acesso ao bucket
-		_, err := client.HeadBucket(ctx, &s3.HeadBucketInput{
+		_, err := c.client.HeadBucket(ctx, &s3.HeadBucketInput{
 			Bucket: aws.String(bucketName),
 		})
 		if err != nil {
@@ -47,11 +50,7 @@ func (c *S3Collector) Collect() error {
 
 		log.Printf("Processando bucket: %s", bucketName)
 
-		// metrics.FileCount.Reset()
-		// metrics.TotalSize.Reset()
-		// metrics.LastUpload.Reset()
-
-		if err := c.collectBucketMetrics(ctx, client, bucketName); err != nil {
+		if err := c.collectBucketMetrics(ctx, c.client, bucketName); err != nil {
 			log.Printf("Erro ao coletar métricas do bucket %s: %v", bucketName, err)
 		}
 

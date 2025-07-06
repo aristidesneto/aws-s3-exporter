@@ -1,8 +1,20 @@
-# Profile utilizado para acessar a AWS
-aws_profile: default
-aws_region: us-east-1
-# Lista de buckets que serão monitorados
-buckets:
-  - my-bucket
+# AWS S3 Exporter Configuration
+# =============================
+# Este arquivo define as configurações do exporter de métricas S3.
+# Siga o padrão YAML e consulte a documentação para detalhes de cada campo.
+
+aws:
+  # Profile utilizado para acessar a AWS (opcional, pode ser sobrescrito por variáveis de ambiente ou flags)
+  # Em ambientes Docker ou cloud, recomenda-se utilizar as variáveis de ambiente padrão da AWS
+  # (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION), pois elas têm prioridade sobre o profile configurado aqui.
+  # Deixe em branco para ser usado a default
+  profile: ""
+  # Região AWS (opcional, pode ser sobrescrito por variáveis de ambiente ou flags)
+  region: ""
+
+s3:
+  # Lista de buckets que serão monitorados
+  buckets: []
+
 # Intervalo em minutos para verificar os buckets
-interval: 5
+interval: 10

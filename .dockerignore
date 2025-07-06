@@ -1,0 +1,6 @@
+/bin
+/configs
+.env
+install.sh
+Makefile
+README.md
