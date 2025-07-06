@@ -47,9 +47,9 @@ func (c *S3Collector) Collect() error {
 
 		log.Printf("Processando bucket: %s", bucketName)
 
-		metrics.FileCount.Reset()
-		metrics.TotalSize.Reset()
-		metrics.LastUpload.Reset()
+		// metrics.FileCount.Reset()
+		// metrics.TotalSize.Reset()
+		// metrics.LastUpload.Reset()
 
 		if err := c.collectBucketMetrics(ctx, client, bucketName); err != nil {
 			log.Printf("Erro ao coletar métricas do bucket %s: %v", bucketName, err)
