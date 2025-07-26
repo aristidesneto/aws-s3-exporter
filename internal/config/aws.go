@@ -8,19 +8,28 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-func LoadAWSConfig(ctx context.Context, profile, region string) (aws.Config, error) {
-	var opts []func(*config.LoadOptions) error
+func LoadAWSConfig(awsConfigs []Aws) ([]aws.Config, error) {
+	var configs []aws.Config
 
-	if region != "" {
-		opts = append(opts, config.WithRegion(region))
-		log.Printf("Usando região AWS da configuração: %s", region)
+	for _, awsCfg := range awsConfigs {
+		var opts []func(*config.LoadOptions) error
+
+		if awsCfg.Region != "" {
+			opts = append(opts, config.WithRegion(awsCfg.Region))
+		}
+
+		if awsCfg.Profile != "" {
+			opts = append(opts, config.WithSharedConfigProfile(awsCfg.Profile))
+		}
+
+		cfg, err := config.LoadDefaultConfig(context.TODO(), opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		configs = append(configs, cfg)
 	}
 
-	if profile != "" {
-		opts = append(opts, config.WithSharedConfigProfile(profile))
-		log.Printf("Usando perfil AWS da configuração: %s", profile)
-	}
-
-	log.Println("Carregando configuração AWS")
-	return config.LoadDefaultConfig(ctx, opts...)
+	log.Println("Configuração AWS carregada")
+	return configs, nil
 }

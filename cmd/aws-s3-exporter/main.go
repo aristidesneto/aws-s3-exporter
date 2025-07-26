@@ -4,7 +4,6 @@ import (
 	"aws-s3-exporter/internal/collector"
 	"aws-s3-exporter/internal/config"
 	"aws-s3-exporter/internal/metrics"
-	"context"
 	"flag"
 	"log"
 	"net/http"
@@ -19,26 +18,35 @@ func main() {
 	flag.Parse()
 
 	metrics.InitMetrics()
-	cfg := config.LoadConfigFile(*configPath)
+	configFile := config.LoadConfigFile(*configPath)
 
-	awsConfig, err := config.LoadAWSConfig(context.TODO(), cfg.AWS.Profile, cfg.AWS.Region)
+	awsConfigs, err := config.LoadAWSConfig(configFile.Aws)
 	if err != nil {
 		log.Fatalf("Erro ao carregar configuração AWS: %v", err)
 	}
-	s3Client := s3.NewFromConfig(awsConfig)
-	s3Collector := collector.NewS3Collector(s3Client, cfg)
 
-	go func() {
-		for {
-			err := s3Collector.Collect()
-			if err != nil {
-				log.Fatalf("Erro ao coletar métricas: %v", err)
+	// Configs de contas AWS
+	for i := range awsConfigs {
+		profile := configFile.Aws[i].Profile
+		interval := configFile.Aws[i].ScrapeInterval
+
+		log.Printf("[ %s ] Iniciando coletor\n", profile)
+
+		s3Client := s3.NewFromConfig(awsConfigs[i])
+		s3Collector := collector.NewS3Collector(s3Client, configFile.Aws[i])
+
+		go func() {
+			for {
+				err := s3Collector.Collect()
+				if err != nil {
+					log.Fatalf("Erro ao coletar métricas: %v", err)
+				}
+
+				log.Printf("[ %s ] Aguardando %d minutos antes para a próxima coleta", profile, interval)
+				<-time.After(time.Duration(interval) * time.Minute)
 			}
-
-			log.Printf("Aguardando %d minutos antes para a próxima coleta", cfg.Interval)
-			<-time.After(time.Duration(cfg.Interval) * time.Minute)
-		}
-	}()
+		}()
+	}
 
 	http.Handle("/metrics", promhttp.Handler())
 	log.Println("Exporter rodando em :2112/metrics")

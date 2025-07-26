@@ -15,14 +15,14 @@ import (
 )
 
 type S3Collector struct {
-	client *s3.Client
-	cfg    config.Config
+	s3Client  *s3.Client
+	awsConfig config.Aws
 }
 
-func NewS3Collector(client *s3.Client, cfg config.Config) *S3Collector {
+func NewS3Collector(client *s3.Client, awsConfig config.Aws) *S3Collector {
 	return &S3Collector{
-		client: client,
-		cfg:    cfg,
+		s3Client:  client,
+		awsConfig: awsConfig,
 	}
 }
 
@@ -33,28 +33,30 @@ func (c *S3Collector) Collect() error {
 	metrics.TotalSize.Reset()
 	metrics.LastUpload.Reset()
 
-	if len(c.cfg.S3.Buckets) == 0 {
+	if len(c.awsConfig.Buckets) == 0 {
 		return fmt.Errorf("nenhum bucket foi especificado")
 	}
 
 	// Em vez de listar todos os buckets, processa apenas os buckets configurados
-	for _, bucketName := range c.cfg.S3.Buckets {
+	for _, bucketName := range c.awsConfig.Buckets {
 		// Verifica se temos acesso ao bucket
-		_, err := c.client.HeadBucket(ctx, &s3.HeadBucketInput{
+		_, err := c.s3Client.HeadBucket(ctx, &s3.HeadBucketInput{
 			Bucket: aws.String(bucketName),
 		})
+
+		profile := c.awsConfig.Profile
 		if err != nil {
-			log.Printf("Erro ao verificar acesso ao bucket %s: %v", bucketName, err)
+			log.Printf("[ %s] Erro ao verificar acesso ao bucket %s: %v", profile, bucketName, err)
 			continue
 		}
 
-		log.Printf("Processando bucket: %s", bucketName)
+		log.Printf("[ %s] Processando bucket: %s", profile, bucketName)
 
-		if err := c.collectBucketMetrics(ctx, c.client, bucketName); err != nil {
-			log.Printf("Erro ao coletar métricas do bucket %s: %v", bucketName, err)
+		if err := c.collectBucketMetrics(ctx, c.s3Client, bucketName); err != nil {
+			log.Printf("[ %s] Erro ao coletar métricas do bucket %s: %v", profile, bucketName, err)
 		}
 
-		log.Printf("Métricas do bucket %s coletadas com sucesso", bucketName)
+		log.Printf("[ %s] Métricas do bucket %s coletadas com sucesso", profile, bucketName)
 	}
 
 	return nil
@@ -82,7 +84,6 @@ func (c *S3Collector) collectBucketMetrics(ctx context.Context, client *s3.Clien
 			size := aws.ToInt64(obj.Size)
 			lastMod := aws.ToTime(obj.LastModified)
 
-			// prefix := helper.ExtractDatePrefix(key)
 			prefix, valid := helper.ExtractDatePrefixAndCheck(key, lastMod, retentionDays)
 			if !valid {
 				continue

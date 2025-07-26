@@ -22,5 +22,5 @@ EXPOSE 2112
 
 ENTRYPOINT ["/bin/aws-s3-exporter"]
 
-CMD ["--config", "/etc/aws-s3-exporter/config.yaml"]
+# CMD ["--config", "/etc/aws-s3-exporter/config.yaml"]
 

@@ -27,43 +27,50 @@ Este é um exportador Prometheus que coleta métricas de buckets S3 da AWS, forn
 
 ## Instalação
 
-Crie um arquivo de configuração chamado `config.yaml` com as seguintes configurações.
-
-> Atualize conforme necessidade
+Crie um arquivo de configuração chamado `config.yaml` com as seguintes configurações e atualize as entradas conforme necessário.
 
 ```yaml
 # AWS S3 Exporter Configuration
 # =============================
-# Este arquivo define as configurações do exporter de métricas S3.
-# Siga o padrão YAML e consulte a documentação para detalhes de cada campo.
+# Este arquivo permite configurar múltiplas contas/perfis AWS para monitoramento de buckets S3.
+#
+# Cada item em 'aws:' representa uma conta ou perfil AWS diferente, com seus próprios buckets e intervalo de coleta.
+#
+# Exemplo de configuração:
+#
+# aws:
+#   - profile: meu-profile
+#     region: us-east-1
+#     scrape_interval: 10 # default 5 minutos
+#     buckets:
+#       - meu-bucket-1
+#       - meu-bucket-2
+#   - profile: outro-profile
+#     region: sa-east-1
+#     buckets:
+#       - outro-bucket
 
 aws:
-  # Profile utilizado para acessar a AWS (opcional, pode ser sobrescrito por variáveis de ambiente ou flags)
-  # Em ambientes Docker ou cloud, recomenda-se utilizar as variáveis de ambiente padrão da AWS
-  # (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION), pois elas têm prioridade sobre o profile configurado aqui.
-  # Deixe em branco para ser usado a default
-  profile: ""
-  # Região AWS (opcional, pode ser sobrescrito por variáveis de ambiente ou flags)
-  region: ""
-
-s3:
-  # Lista de buckets que serão monitorados
-  buckets: []
-
-# Intervalo em minutos para verificar os buckets
-interval: 10
+  - profile: ""
+    region: ""
+    scrape_interval: 10
+    buckets: []
 ```
 
-Escolha como deseja rodar sua aplicação:
+### Com múltiplas contas/perfis AWS (Recomendado)
+
+Para usar o exporter com mais de uma conta ou perfil AWS é necessário carregar o arquivo de configuração ao invés de usar as variáveis de ambiente.
+
+O arquivo `~/.aws/credenciais` é necessário para obter as credenciais por perfil.
+
+**Escolha como deseja rodar sua aplicação:**
 
 1. **Docker**
 
 ```bash
 docker run -p 2112:2112 \
-  -v ./config.yaml:/etc/aws-s3-exporter/config.yaml \
-  -e AWS_DEFAULT_REGION=us-east-1 \
-  -e AWS_ACCESS_KEY_ID=<access-key> \
-  -e AWS_SECRET_ACCESS_KEY=<secret-key> \
+  -v ./config.yaml:/etc/aws-s3-exporter/config.yaml:ro \
+  -v ~/.aws:/root/.aws:ro \
   aristidesbneto/aws-s3-exporter:latest \
     --config /etc/aws-s3-exporter/config.yaml
 ```
@@ -74,13 +81,10 @@ docker run -p 2112:2112 \
 services:
   aws-s3-exporter:
     image: aristidesbneto/aws-s3-exporter:latest
-    environment:
-      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-    # command: "--config /etc/aws-s3-exporter/config.yaml"
+    command: "--config /etc/aws-s3-exporter/config.yaml"
     volumes:
       - ./configs/config.yaml:/etc/aws-s3-exporter/config.yaml:ro
+      - ~/.aws:/root/.aws:ro
     ports:
       - "2112:2112"
 ```
@@ -107,6 +111,40 @@ Após a instalação:
 1. Configure o arquivo em `/etc/aws-s3-exporter/config.yaml`
 2. Inicie o serviço: `sudo systemctl start aws-s3-exporter`
 3. Habilite o início automático: `sudo systemctl enable aws-s3-exporter`
+
+### Única conta/perfil AWS
+
+> Esse caso é recomendado para os casos em que o arquivo de configuração da AWS `~/.aws/credenciais` não exista.
+
+Caso não queira usar arquivo de configuração, também é possível usar apenas as variáveis de ambiente contendo as informações sobre a conta e bucket AWS.
+
+1. **Usando Docker**
+
+```ini
+docker run -p 2112:2112 \
+  -e AWS_REGION=region \
+  -e AWS_ACCESS_KEY_ID=access-key \
+  -e AWS_SECRET_ACCESS_KEY=secret-key \
+  -e AWS_BUCKETS=bucket1,bucket2 \
+  -e AWS_SCRAPE_INTERVAL=10 \
+  aristidesbneto/aws-s3-exporter:latest
+```
+
+2. **Usando Docker Compose**
+
+```yaml
+services:
+  aws-s3-exporter:
+    image: aristidesbneto/aws-s3-exporter:latest
+    environment:
+      AWS_REGION: region
+      AWS_ACCESS_KEY_ID: access-key
+      AWS_SECRET_ACCESS_KEY: secret-key
+      AWS_BUCKETS: bucket1,bucket2
+      AWS_SCRAPE_INTERVAL: 10
+    ports:
+      - "2112:2112"
+```
 
 ## Desenvolvimento
 
