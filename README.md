@@ -112,40 +112,6 @@ Após a instalação:
 2. Inicie o serviço: `sudo systemctl start aws-s3-exporter`
 3. Habilite o início automático: `sudo systemctl enable aws-s3-exporter`
 
-### Única conta/perfil AWS
-
-> Esse caso é recomendado para os casos em que o arquivo de configuração da AWS `~/.aws/credenciais` não exista.
-
-Caso não queira usar arquivo de configuração, também é possível usar apenas as variáveis de ambiente contendo as informações sobre a conta e bucket AWS.
-
-1. **Usando Docker**
-
-```ini
-docker run -p 2112:2112 \
-  -e AWS_REGION=region \
-  -e AWS_ACCESS_KEY_ID=access-key \
-  -e AWS_SECRET_ACCESS_KEY=secret-key \
-  -e AWS_BUCKETS=bucket1,bucket2 \
-  -e AWS_SCRAPE_INTERVAL=10 \
-  aristidesbneto/aws-s3-exporter:latest
-```
-
-2. **Usando Docker Compose**
-
-```yaml
-services:
-  aws-s3-exporter:
-    image: aristidesbneto/aws-s3-exporter:latest
-    environment:
-      AWS_REGION: region
-      AWS_ACCESS_KEY_ID: access-key
-      AWS_SECRET_ACCESS_KEY: secret-key
-      AWS_BUCKETS: bucket1,bucket2
-      AWS_SCRAPE_INTERVAL: 10
-    ports:
-      - "2112:2112"
-```
-
 ## Desenvolvimento
 
 Se deseja contribuir, você pode executar o projeto localmente:
