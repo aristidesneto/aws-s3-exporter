@@ -26,16 +26,13 @@ func NewS3Collector(client *s3.Client, awsConfig config.Aws) *S3Collector {
 	}
 }
 
-func (c *S3Collector) Collect() error {
-	ctx := context.TODO()
-
-	metrics.FileCount.Reset()
-	metrics.TotalSize.Reset()
-	metrics.LastUpload.Reset()
+func (c *S3Collector) Collect(ctx context.Context) error {
 
 	if len(c.awsConfig.Buckets) == 0 {
 		return fmt.Errorf("nenhum bucket foi especificado")
 	}
+
+	profile := c.awsConfig.Profile
 
 	// Em vez de listar todos os buckets, processa apenas os buckets configurados
 	for _, bucketName := range c.awsConfig.Buckets {
@@ -44,26 +41,25 @@ func (c *S3Collector) Collect() error {
 			Bucket: aws.String(bucketName),
 		})
 
-		profile := c.awsConfig.Profile
 		if err != nil {
-			log.Printf("[ %s] Erro ao verificar acesso ao bucket %s: %v", profile, bucketName, err)
+			log.Printf("[ %s] ❌ Erro ao verificar acesso ao bucket %s: %v", profile, bucketName, err)
 			continue
 		}
 
-		log.Printf("[ %s] Processando bucket: %s", profile, bucketName)
+		log.Printf("[ %s] ⏳ Coletando métricas do bucket: %s", profile, bucketName)
 
-		if err := c.collectBucketMetrics(ctx, c.s3Client, bucketName); err != nil {
-			log.Printf("[ %s] Erro ao coletar métricas do bucket %s: %v", profile, bucketName, err)
+		if err := c.collectBucketMetrics(ctx, bucketName, profile); err != nil {
+			log.Printf("[ %s] ❌ Erro no bucket %s: %v", profile, bucketName, err)
 		}
 
-		log.Printf("[ %s] Métricas do bucket %s coletadas com sucesso", profile, bucketName)
+		log.Printf("[ %s] ✅ Métricas coletadas: %s", profile, bucketName)
 	}
 
 	return nil
 }
 
-func (c *S3Collector) collectBucketMetrics(ctx context.Context, client *s3.Client, bucketName string) error {
-	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{
+func (c *S3Collector) collectBucketMetrics(ctx context.Context, bucketName, profile string) error {
+	paginator := s3.NewListObjectsV2Paginator(c.s3Client, &s3.ListObjectsV2Input{
 		Bucket: &bucketName,
 	})
 
@@ -99,9 +95,9 @@ func (c *S3Collector) collectBucketMetrics(ctx context.Context, client *s3.Clien
 	}
 
 	for prefix, count := range countMap {
-		metrics.FileCount.WithLabelValues(bucketName, prefix).Set(float64(count))
-		metrics.TotalSize.WithLabelValues(bucketName, prefix).Set(float64(sizeMap[prefix]))
-		metrics.LastUpload.WithLabelValues(bucketName, prefix).Set(float64(lastUploadMap[prefix].Unix()))
+		metrics.FileCount.WithLabelValues(bucketName, prefix, profile).Set(float64(count))
+		metrics.TotalSize.WithLabelValues(bucketName, prefix, profile).Set(float64(sizeMap[prefix]))
+		metrics.LastUpload.WithLabelValues(bucketName, prefix, profile).Set(float64(lastUploadMap[prefix].Unix()))
 	}
 
 	return nil

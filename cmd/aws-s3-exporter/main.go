@@ -4,6 +4,7 @@ import (
 	"aws-s3-exporter/internal/collector"
 	"aws-s3-exporter/internal/config"
 	"aws-s3-exporter/internal/metrics"
+	"context"
 	"flag"
 	"log"
 	"net/http"
@@ -27,28 +28,31 @@ func main() {
 
 	// Configs de contas AWS
 	for i := range awsConfigs {
-		profile := configFile.Aws[i].Profile
-		interval := configFile.Aws[i].ScrapeInterval
+		cfg := configFile.Aws[i]
+		profile := cfg.Profile
+		interval := cfg.ScrapeInterval
 
-		log.Printf("[ %s ] Iniciando coletor\n", profile)
+		log.Printf("[ %s ] 🚀 Iniciando loop de coleta a cada %d minutos", profile, interval)
 
 		s3Client := s3.NewFromConfig(awsConfigs[i])
-		s3Collector := collector.NewS3Collector(s3Client, configFile.Aws[i])
+		s3Collector := collector.NewS3Collector(s3Client, cfg)
 
-		go func() {
+		go func(profile string, interval int, s3Collector *collector.S3Collector) {
 			for {
-				err := s3Collector.Collect()
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+				err := s3Collector.Collect(ctx)
 				if err != nil {
-					log.Fatalf("Erro ao coletar métricas: %v", err)
+					log.Printf("[ %s ] ❌ Erro na  coleta de métricas: %v", profile, err)
 				}
 
-				log.Printf("[ %s ] Aguardando %d minutos antes para a próxima coleta", profile, interval)
+				cancel()
+				log.Printf("[ %s ] ⏳ Nova coleta em %d minutos", profile, interval)
 				<-time.After(time.Duration(interval) * time.Minute)
 			}
-		}()
+		}(profile, interval, s3Collector)
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
-	log.Println("Exporter rodando em :2112/metrics")
+	log.Println("🌐 Exporter rodando em :2112/metrics")
 	log.Fatal(http.ListenAndServe(":2112", nil))
 }

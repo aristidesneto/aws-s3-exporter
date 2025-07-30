@@ -8,7 +8,7 @@ var (
 			Name: "s3_backup_file_count",
 			Help: "Número de arquivos por diretório (ano/mes/dia)",
 		},
-		[]string{"bucket", "prefix"},
+		[]string{"bucket", "prefix", "profile"},
 	)
 
 	TotalSize = prometheus.NewGaugeVec(
@@ -16,7 +16,7 @@ var (
 			Name: "s3_backup_total_bytes",
 			Help: "Total de bytes por diretório (ano/mes/dia)",
 		},
-		[]string{"bucket", "prefix"},
+		[]string{"bucket", "prefix", "profile"},
 	)
 
 	LastUpload = prometheus.NewGaugeVec(
@@ -24,7 +24,7 @@ var (
 			Name: "s3_backup_last_upload_timestamp",
 			Help: "Timestamp do último upload por prefixo (ano/mês/dia)",
 		},
-		[]string{"bucket", "prefix"},
+		[]string{"bucket", "prefix", "profile"},
 	)
 )
 

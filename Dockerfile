@@ -16,6 +16,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
 
 FROM gcr.io/distroless/static-debian12
 
+ENV TZ=America/Sao_Paulo
+
 COPY --from=builder /aws-s3-exporter /bin/aws-s3-exporter
 
 EXPOSE 2112
